@@ -11,6 +11,8 @@ require([
 
         "esri/renderers/ClassBreaksRenderer",
         "esri/layers/LayerDrawingOptions",
+        "esri/renderers/UniqueValueRenderer",
+        
 
         "dojo/ready",
         "dojo/parser",
@@ -25,7 +27,7 @@ require([
         "dijit/layout/ContentPane",
         "dijit/form/Button"],
     function (Map, ArcGISDynamicMapServiceLayer, FeatureLayer,
-              SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol, Color, ClassBreaksRenderer, LayerDrawingOptions,
+              SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol, Color, ClassBreaksRenderer, LayerDrawingOptions, UniqueValueRenderer,
               ready, parser, on, dom,
               declare, array,
               BorderContainer, ContentPane, Button) {
@@ -38,12 +40,12 @@ require([
             parser.parse();
 
             // URL variables
-            var sUrlUSAService = "http://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer";
-            var sUrlQuakesLayer = "http://services.arcgis.com/ue9rwulIoeLEI9bj/arcgis/rest/services/Earthquakes/FeatureServer/0";
+            var sUrlUSAService = "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer";
+            var sUrlQuakesLayer = "https://services.arcgis.com/ue9rwulIoeLEI9bj/arcgis/rest/services/Earthquakes/FeatureServer/0";
 
             // Create the map
             var mapMain = new Map("divMap", {
-                basemap: "satellite",
+                basemap: "osm",
                 center: [-119.65, 36.87],
                 zoom: 4
             });
@@ -62,22 +64,22 @@ require([
 
 
             // Construct the USA layer
-            var lyrUSA = new ArcGISDynamicMapServiceLayer(sUrlUSAService, {
+            var capa_dinamica = new ArcGISDynamicMapServiceLayer(sUrlUSAService, {
                 opacity: 0.5
             });
-            lyrUSA.setVisibleLayers([0, 1, 3]);
+            capa_dinamica.setVisibleLayers([0, 1, 3]);
 
 
             var outFieldsQuakes = ["EQID", "UTC_DATETIME", "MAGNITUDE", "PLACE"];
 
             // Construct the Quakes layer
-            var lyrQuakes = new FeatureLayer(sUrlQuakesLayer, {
+            var capa_terremotos = new FeatureLayer(sUrlQuakesLayer, {
                 outFields: outFieldsQuakes
 
 
             });
-            lyrQuakes.setDefinitionExpression("MAGNITUDE >= 2.0");
-            mapMain.addLayers([lyrUSA, lyrQuakes]);
+            capa_terremotos.setDefinitionExpression("MAGNITUDE >= 2.0");
+            mapMain.addLayers([capa_dinamica, capa_terremotos]);
 
 
             function changeQuakesRenderer() {
@@ -87,22 +89,34 @@ require([
                 quakeSymbol.setColor(new Color([255, 0, 0, 0.5]));
                 quakeSymbol.setOutline(null);
 
+                
+                /*Step: Construct and apply a simple renderer for earthquake features*/
+                 
 
-                /*
-                 * Step: Construct and apply a simple renderer for earthquake features
-                 */
+                var renderer_quakes = new UniqueValueRenderer (quakeSymbol)
 
-
-                /*
-                 * Step: Construct symbol size info parameters for the quake renderer
-                 */
+                capa_terremotos.setRenderer(renderer_quakes)
 
 
-                /*
-                 * Step: Apply symbol size info to the quake renderer
-                 */
+                
+                /*Step: Construct symbol size info parameters for the quake renderer*/
+                 
+                var sizeInfo = renderer.setVisualVariables ([{
+
+                    field: "MAGNITUDE",
+                    minSize: 1,
+                    maxSize: 50,
+                    minDataValue:0,
+                    maxDataValue:9,
+                    type: "sizeInfo",
+                    valueUnit: "unknown"
+                    }])                      
 
 
+                
+                /*Step: Apply symbol size info to the quake renderer*/
+
+                renderer_quakes.setSizeInfo(sizeInfo)
             }
 
 
@@ -110,19 +124,15 @@ require([
 
                 var symDefault = new SimpleFillSymbol().setColor(new Color([89, 255, 0]));
 
-                /*
-                 * Step: Construct a class breaks renderer
-                 */
+                /*Step: Construir el renderizador de clases */
                     var renderer_counties = new ClassBreaksRenderer (symDefault, "pop00_sqmi")
 
 
-                /*
-                 * Step: Define the class breaks
-                 */
+                /* Step: Definir los intervalos de clases*/
                 renderer_counties.addBreak({
 
                     minvalue: 0,
-                    maxvalue: 7.63,
+                    maxvalue: 7.6,
                     symbol: symDefault,
                     label: "Densidad baja"
 
@@ -152,13 +162,13 @@ require([
                 var capa_condado = new LayerDrawingOptions();
                 capa_condado.renderer = renderer_counties;
                 capas_usa[3]= capa_condado;               
-                lyrUSA.setLayerDrawingOptions(capas_usa);
+                capa_dinamica.setLayerDrawingOptions(capas_usa);
 
                 /*var arrayLayerDrawingOptionsUSA = [];
                 var layerDrawingOptionsCounties = new LayerDrawingOptions();
                 layerDrawingOptionsCounties.renderer = cbrCountyPopDensity;
                 arrayLayerDrawingOptionsUSA[3] = layerDrawingOptionsCounties;
-                lyrUSA.setLayerDrawingOptions(arrayLayerDrawingOptionsUSA);*/
+                capa_dinamica.setLayerDrawingOptions(arrayLayerDrawingOptionsUSA);*/
 
                 
 
