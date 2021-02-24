@@ -13,6 +13,10 @@ require([
         "dojo/on",
         "dojo/dom",
 
+        "esri/graphic",
+        "esri/toolbars/draw",
+        "esri/tasks/query",
+
         "dojo/store/Memory",
         "dojo/date/locale",
 
@@ -28,7 +32,7 @@ require([
         "dijit/form/Button"],
     function (Map, ArcGISDynamicMapServiceLayer, FeatureLayer,
               SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol,
-              ready, parser, on, dom,
+              ready, parser, on, dom, Graphic, Draw, Query,
               Memory, locale,
               Color, declare, array,
               Grid, Selection,
@@ -63,7 +67,7 @@ require([
 
             // Create the map
             var mapMain = new Map("divMap", {
-                basemap: "satellite",
+                basemap: "osm",
                 center: [-119.65, 36.87],
                 zoom: 4
             });
@@ -78,6 +82,7 @@ require([
             /*
              * Step: Specify the output fields
              */
+            var campos_salida = ["EQID", "UTC_DATETIME", "MAGNITUDE", "PLACE"];
 
 
             // Construct the Quakes layer
@@ -85,6 +90,7 @@ require([
                 /*
                  * Step: Set the quakes layer output fields
                  */
+                outFields: campos_salida
 
 
             });
@@ -95,11 +101,17 @@ require([
              * Step: Wire the draw tool initialization function
              */
 
+            mapMain.on("load", initDrawTool);
+
 
             function initDrawTool() {
                 /*
                  * Step: Implement the Draw toolbar
                  */
+
+                var tbDraw = new Draw(mapMain);
+                tbDraw.on("draw-end", displayPolygon);
+                tbDraw.activate(Draw.POLYGON);
 
 
             }
@@ -118,10 +130,12 @@ require([
                 /*
                  * Step: Construct and add the polygon graphic
                  */
+                var graphicPolygon = new Graphic(geometryInput, tbDrawSymbol);
+                mapMain.graphics.add(graphicPolygon);
 
 
                 // Call the next function
-                selectQuakes(geometryInput);
+                selectQuakes(geometryInput);  
             }
 
             function selectQuakes(geometryInput) {
@@ -130,7 +144,7 @@ require([
                 var symbolSelected = new SimpleMarkerSymbol({
                     "type": "esriSMS",
                     "style": "esriSMSCircle",
-                    "color": [255, 115, 0, 128],
+                    "color": [157, 80, 0, 100],
                     "size": 6,
                     "outline": {
                         "color": [255, 0, 0, 214],
@@ -141,41 +155,50 @@ require([
                 /*
                  * Step: Set the selection symbol
                  */
+                lyrQuakes.setSelectionSymbol(symbolSelected);
 
 
                 /*
                  * Step: Initialize the query
                  */
+                var queryQuakes = new Query();
+                queryQuakes.geometry = geometryInput;
 
 
                 /*
                  * Step: Wire the layer's selection complete event
                  */
+                lyrQuakes.on("selection-complete", populateGrid);
 
 
                 /*
                  * Step: Perform the selection
                  */
+                lyrQuakes.selectFeatures(queryQuakes, FeatureLayer.SELECTION_NEW);
 
 
             }
 
-            function populateGrid(results) {
+            function populateGrid(results) { /* results son todos los terremostos que tenemos dentro del polígono dibujado*/
 
-                var gridData;
+                
 
                 dataQuakes = array.map(results.features, function (feature) {
                     return {
                         /*
                          * Step: Reference the attribute field values
                          */
+                        "EQID": feature.attributes[campos_salida[0]],
+                        "UTC_DATETIME": feature.attributes[campos_salida[1]],
+                        "MAGNITUDE": feature.attributes[campos_salida[2]],
+                        "PLACE": feature.attributes[campos_salida[3]],
 
 
                     }
                 });
 
                 // Pass the data to the grid
-                var memStore = new Memory({
+                var memStore = new Memory({ /*guarda de forma termporal los datos para luego pintarlos*/
                     data: dataQuakes
                 });
                 gridQuakes.set("store", memStore);

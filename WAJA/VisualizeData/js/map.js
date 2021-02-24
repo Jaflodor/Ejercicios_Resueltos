@@ -9,6 +9,9 @@ require([
         "esri/symbols/SimpleMarkerSymbol",
         "esri/Color",
 
+        "esri/renderers/ClassBreaksRenderer",
+        "esri/layers/LayerDrawingOptions",
+
         "dojo/ready",
         "dojo/parser",
         "dojo/on",
@@ -22,7 +25,7 @@ require([
         "dijit/layout/ContentPane",
         "dijit/form/Button"],
     function (Map, ArcGISDynamicMapServiceLayer, FeatureLayer,
-              SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol, Color,
+              SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol, Color, ClassBreaksRenderer, LayerDrawingOptions,
               ready, parser, on, dom,
               declare, array,
               BorderContainer, ContentPane, Button) {
@@ -105,25 +108,66 @@ require([
 
             function changeCountiesRenderer() {
 
-                var symDefault = new SimpleFillSymbol().setColor(new Color([255, 255, 0]));
+                var symDefault = new SimpleFillSymbol().setColor(new Color([89, 255, 0]));
 
                 /*
                  * Step: Construct a class breaks renderer
                  */
+                    var renderer_counties = new ClassBreaksRenderer (symDefault, "pop00_sqmi")
 
 
                 /*
                  * Step: Define the class breaks
                  */
+                renderer_counties.addBreak({
 
+                    minvalue: 0,
+                    maxvalue: 7.63,
+                    symbol: symDefault,
+                    label: "Densidad baja"
 
+                });
+                renderer_counties.addBreak({
+
+                    minvalue: 7.64,
+                    maxvalue: 15.26,
+                    symbol: new SimpleFillSymbol().setColor(new Color([255, 255, 0])),
+                    label: "Densidad media"
+
+                });
+                renderer_counties.addBreak({
+
+                    minvalue: 15.27,
+                    maxvalue: 22.9,
+                    symbol: new SimpleFillSymbol().setColor(new Color([255, 0, 10])),
+                    label: "Densidad alta"
+
+                })
                 /*
                  * Step: Apply the renderer to the Counties layer
                  */
 
+                
+                var capas_usa = [];
+                var capa_condado = new LayerDrawingOptions();
+                capa_condado.renderer = renderer_counties;
+                capas_usa[3]= capa_condado;               
+                lyrUSA.setLayerDrawingOptions(capas_usa);
 
-            }
+                /*var arrayLayerDrawingOptionsUSA = [];
+                var layerDrawingOptionsCounties = new LayerDrawingOptions();
+                layerDrawingOptionsCounties.renderer = cbrCountyPopDensity;
+                arrayLayerDrawingOptionsUSA[3] = layerDrawingOptionsCounties;
+                lyrUSA.setLayerDrawingOptions(arrayLayerDrawingOptionsUSA);*/
+
+                
+
+                
 
 
-        });
+            
+
+
+        };
     });
+})
