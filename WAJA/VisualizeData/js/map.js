@@ -11,7 +11,7 @@ require([
 
         "esri/renderers/ClassBreaksRenderer",
         "esri/layers/LayerDrawingOptions",
-        "esri/renderers/UniqueValueRenderer",
+        "esri/renderers/UniqueValueRenderer",        
         
 
         "dojo/ready",

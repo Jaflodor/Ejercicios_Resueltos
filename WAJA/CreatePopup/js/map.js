@@ -14,6 +14,9 @@ require([
         "esri/renderers/ClassBreaksRenderer",
         "esri/layers/LayerDrawingOptions",
 
+        "esri/dijit/PopupTemplate",
+       
+
         "dojo/ready",
         "dojo/parser",
         "dojo/on",
@@ -28,7 +31,7 @@ require([
         "dijit/form/Button"],
     function (Map, ArcGISDynamicMapServiceLayer, FeatureLayer,
               SimpleFillSymbol, SimpleLineSymbol, SimpleMarkerSymbol, Color,
-              SimpleRenderer, ClassBreaksRenderer, LayerDrawingOptions,
+              SimpleRenderer, ClassBreaksRenderer, LayerDrawingOptions, PopupTemplate,
               ready, parser, on, dom,
               declare, array,
               BorderContainer, ContentPane, Button) {
@@ -79,6 +82,20 @@ require([
              * Step: Complete  the  popup template
              */
 
+            var ventana_emergente = new PopupTemplate ({
+
+                "tittle": "Magnitud del terremoto: {MAGNITUDE}",
+                "fieldInfos": [{
+                    "fieldName": "PLACE",
+                    format: {
+                        
+                        "places": 2,
+                        "digitSeparator": true                        
+
+                    }
+                }],
+                "description": "Localización: {PLACE}"
+            })
             /*
 			var ptQuakes = new PopupTemplate({
 				"title": "Quake magnitude:  {MAGNITUDE}",
@@ -105,6 +122,7 @@ require([
                 /*
                  * Step: Assign  the  popup template
                  */
+                infoTemplate : ventana_emergente
 
 
             });
