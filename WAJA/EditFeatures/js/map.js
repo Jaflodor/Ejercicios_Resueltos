@@ -10,10 +10,12 @@ require([
         "dojo/on",
         "dojo/_base/array",
 
+        "esri/dijit/editing/Editor",
+
         "dijit/layout/BorderContainer",
         "dijit/layout/ContentPane"],
     function (Map,
-              ready, parser, on, array,
+              ready, parser, on, array, Editor,
               BorderContainer, ContentPane) {
 // @formatter:on
 
