@@ -11,11 +11,14 @@ require([
         "dojo/_base/array",
 
         "esri/dijit/editing/Editor",
+        "esri/dijit/editing/TemplatePicker",
+        "esri/layers/FeatureLayer",
+        "esri/tasks/GeometryService",
 
         "dijit/layout/BorderContainer",
         "dijit/layout/ContentPane"],
     function (Map,
-              ready, parser, on, array, Editor,
+              ready, parser, on, array, Editor, TemplatePicker, FeatureLayer, GeometryService,
               BorderContainer, ContentPane) {
 // @formatter:on
 
@@ -28,11 +31,12 @@ require([
             /*
              * Step: Specify the proxy Url
              */
+            /*config.defaults.io.proxyUrl = "http://localhost/proxy/proxy.ashx"*/
 
 
             // Create the map
             mapMain = new Map("divMap", {
-                basemap: "topo",
+                basemap: "osm",
                 center: [-116.64, 34.37],
                 zoom: 10
             });
@@ -41,17 +45,31 @@ require([
             /*
              * Step: Construct the editable layers
              */
+             var flFirePoints = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/0", {
+                outfileds: ['*']
+             });
+             var flFireLines = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/1", {
+                outfileds: ['*']
+             });
+             var flFirePolygons = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/2", {
+                outfileds: ['*']
+             }); 
 
 
-            // Listen for the editable layers to finish loading
+             /*Construimos el Geometry service*/
+
+             var servicio_geometria= new GeometryService("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Utilities/Geometry/GeometryServer")
+
+
+            // Espere a que las capas editables terminen de cargarse
             mapMain.on("layers-add-result", initEditor);
 
-            // add the editable layers to the map
+            // Agregar las capas editables al mapa
             mapMain.addLayers([flFirePolygons, flFireLines, flFirePoints]);
 
             function initEditor(results) {
 
-                // Map the event results into an array of layerInfo objects
+                // Mapear los resultados del evento en un array de objetos layerInfo
                 var layerInfosWildfire = array.map(results.layers, function (result) {
                     return {
                         featureLayer: result.layer
@@ -59,28 +77,67 @@ require([
                 });
 
                 /*
-                 * Step: Map the event results into an array of Layer objects
+                 * Step: Asignar los resultados del evento a un array de objetos Layer
                  */
 
 
                 /*
-                 * Step: Add a custom TemplatePicker widget
+                 * Step: Añadir el TemplatePicker widget
                  */
+                 var miniaturas_selector = new TemplatePicker ({
+                    columns: "auto",
+                    featureLayers: [flFirePoints,flFireLines,flFirePolygons],
+                    rows: "auto",
+                    style: "height:500px;"
+                 }, "divLeft")
+
+                 miniaturas_selector.startup();
+
 
 
                 /*
-                 * Step: Prepare the Editor widget settings
+                 * Step: Establecer la configuración del Editor widget
                  */
+                 var settings = {
+                     /*Opciones de creación de entidades */
+                    
+                    /*Opciones de información de campos*/
+                    fieldName: "description",
+                    isEditable: true,
+                    /*Opciones de información de capa*/
+                    featureLayer: flFirePoints,
+                    createOptions: {
+                        polygonDrawTools: [Editor.CREATE_TOOL_POLYGON, Editor.CREATE_TOOL_FREEHAND_POLYGON],
+                        polylineDrawTools: [Editor.CREATE_TOOL_POLYLINE, Editor.CREATE_TOOL_FREEHAND_POLYLINE],
+
+                    },
+                    geometryService: servicio_geometria,
+                    layerInfos:[],
+                    map: mapMain,
+                    toolbarVisible: true,
+                    toolbarOptions: {
+                        cutVisible: true,
+                        mergeVisible: true,
+                        reshapeVisible: true
+                    }
+                 }
+
 
 
                 /*
-                 * Step: Build the Editor constructor's first parameter
+                 * Step: Construir el primer parámetro del constructor del Editor
                  */
+                var params = { settings: settings };
 
 
                 /*
-                 * Step: Construct the Editor widget
+                 * Step: Construir el Editor widget
                  */
+                 var editor_widget = new Editor (params, "divTop")
+
+                 editor_widget.startup();
+
+
 
 
             };
