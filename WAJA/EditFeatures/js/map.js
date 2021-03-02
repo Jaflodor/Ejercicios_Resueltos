@@ -14,11 +14,13 @@ require([
         "esri/dijit/editing/TemplatePicker",
         "esri/layers/FeatureLayer",
         "esri/tasks/GeometryService",
+        "esri/config",
+        
 
         "dijit/layout/BorderContainer",
         "dijit/layout/ContentPane"],
     function (Map,
-              ready, parser, on, array, Editor, TemplatePicker, FeatureLayer, GeometryService,
+              ready, parser, on, array, Editor, TemplatePicker, FeatureLayer, GeometryService, config,
               BorderContainer, ContentPane) {
 // @formatter:on
 
@@ -29,9 +31,9 @@ require([
             parser.parse();
 
             /*
-             * Step: Specify the proxy Url
+             * Step: Especificar la URL del proxy
              */
-            /*config.defaults.io.proxyUrl = "http://localhost/proxy/proxy.ashx"*/
+            config.defaults.io.proxyUrl = "http://localhost/proxy/proxy.ashx"
 
 
             // Create the map
@@ -46,13 +48,13 @@ require([
              * Step: Construct the editable layers
              */
              var flFirePoints = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/0", {
-                outfileds: ['*']
+                outFields: ['*']
              });
              var flFireLines = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/1", {
-                outfileds: ['*']
+                outFields: ['*']
              });
              var flFirePolygons = new FeatureLayer ("http://sampleserver6.arcgisonline.com/arcgis/rest/services/Wildfire/FeatureServer/2", {
-                outfileds: ['*']
+                outFields: ['*']
              }); 
 
 
@@ -79,6 +81,9 @@ require([
                 /*
                  * Step: Asignar los resultados del evento a un array de objetos Layer
                  */
+                var layersWildfire = array.map(results.layers, function(result) {
+                    return result.layer;
+                  });
 
 
                 /*
@@ -86,9 +91,9 @@ require([
                  */
                  var miniaturas_selector = new TemplatePicker ({
                     columns: "auto",
-                    featureLayers: [flFirePoints,flFireLines,flFirePolygons],
+                    featureLayers: layersWildfire,
                     rows: "auto",
-                    style: "height:500px;"
+                    style: "height:1000px;"
                  }, "divLeft")
 
                  miniaturas_selector.startup();
@@ -99,36 +104,29 @@ require([
                  * Step: Establecer la configuración del Editor widget
                  */
                  var settings = {
-                     /*Opciones de creación de entidades */
-                    
-                    /*Opciones de información de campos*/
-                    fieldName: "description",
-                    isEditable: true,
-                    /*Opciones de información de capa*/
-                    featureLayer: flFirePoints,
+                                         
                     createOptions: {
                         polygonDrawTools: [Editor.CREATE_TOOL_POLYGON, Editor.CREATE_TOOL_FREEHAND_POLYGON],
                         polylineDrawTools: [Editor.CREATE_TOOL_POLYLINE, Editor.CREATE_TOOL_FREEHAND_POLYLINE],
-
                     },
                     geometryService: servicio_geometria,
-                    layerInfos:[],
+                    layerInfos:layerInfosWildfire,
                     map: mapMain,
                     toolbarVisible: true,
                     toolbarOptions: {
                         cutVisible: true,
                         mergeVisible: true,
                         reshapeVisible: true
-                    }
+                    },
+                    templatePicker: miniaturas_selector,                    
+                    enableUndoRedo: true,
+                    maxUndoRedoOperations: 15
                  }
-
-
 
                 /*
                  * Step: Construir el primer parámetro del constructor del Editor
                  */
                 var params = { settings: settings };
-
 
                 /*
                  * Step: Construir el Editor widget
@@ -142,5 +140,7 @@ require([
 
             };
 
+            
+            
         });
     });
