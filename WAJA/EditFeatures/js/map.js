@@ -76,7 +76,10 @@ require([
                     return {
                         featureLayer: result.layer
                     };
+
+                    
                 });
+                console.log(layerInfosWildfire)
 
                 /*
                  * Step: Asignar los resultados del evento a un array de objetos Layer
@@ -84,6 +87,9 @@ require([
                 var layersWildfire = array.map(results.layers, function(result) {
                     return result.layer;
                   });
+                
+                  console.log(layersWildfire)
+
 
 
                 /*
